@@ -83,7 +83,7 @@ echo $jsword;
 						LatLng = {lat : lat,lng :　lon};//google map latlng obj 
 						var sa = add_marker(map,LatLng,title);
 						markers.push(sa);
-						console.log(markers);
+						//console.log(markers);
 						//console.log('initial');
 						/*if(key2 == 'Stops'){
 							console.log(data[key][key2]['StopPosition']);
