@@ -20,7 +20,8 @@ echo $jsword;
 	</style>
   </head>
   <body>
-  <BR>
+  <h1 id='routecode'></h1>
+  <!--<h1 id='routename'></h1>-->
   <div id='main'></div>
   <BR>
   <div>上次更新時間：<span id='remain'></span><span>秒</span></div>
@@ -41,8 +42,20 @@ echo $jsword;
 	function wrap_tb(str){
 		return '<table border=1>'+str+'</table>';
 	}
+	function initial(){//ajax once data
+	var RouteName = '';
+		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=0", function( data ) {
+			console.log(data);
+			for(key in data){
+				RouteName = data[key]['RouteName']['Zh_tw'];
+				}
+				$('#routecode').html(RouteName);
+			});
+			
+	}
 	function touch(){//ajax 試探值的變化
-		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&touch=true", function( data ) {
+		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1", function( data ) {
+			console.log("crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1");
 			console.log(data);
 			var UpdateTime = '';
 			for(key in data){
@@ -105,6 +118,7 @@ echo $jsword;
 	}
 	////
 	  $(function(){
+		 initial();
 		 touch();
 		 setInterval(function(){ touch(); }, 3000);
 		

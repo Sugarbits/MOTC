@@ -1,6 +1,10 @@
 <?php header("Content-Type:text/html; charset=UTF-8"); ?> 
 <?php
-	if($_GET['touch']=='true'){
+	@$func = $_GET['func'];
+	if($func == '0'){
+		$url = 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/'.$_GET['citycode'].'/'.$_GET['route'].'?$select=RouteName%2CDirection%2CStopSequence&$filter=Direction%20eq%20%27'.$_GET['direct'].'%27&$orderby=StopSequence%20asc&$top=1&$format=JSON';	
+	}
+	else if($func == '1'){
 		//$url = 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/'.$_GET['citycode'].'/'.$_GET['route'].'?$filter=Direction%20eq%20%27'.$_GET['direct'].'%27&$orderby=StopSequence%20asc&$format=JSON';//動態的資料，待修改(要配合 get parameter)	
 		$url = 'http://ptx.transportdata.tw/MOTC/v2/Bus/EstimatedTimeOfArrival/City/'.$_GET['citycode'].'/'.$_GET['route'].'?$select=UpdateTime%2CDirection%2CStopSequence&$filter=Direction%20eq%20%27'.$_GET['direct'].'%27&$orderby=StopSequence%20asc&$top=1&$format=JSON';
 	}
