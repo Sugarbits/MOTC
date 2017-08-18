@@ -54,6 +54,8 @@ echo $jsword;
 	   UpdateTime:'',
 	   Timer:''
    };
+   const timer_config = ['尚未發車','進站中','x分鐘','xx:oo'];
+   //const timer_config_word = ['undefined','<=2分鐘','>2分鐘','>30分鐘'];
    var markers =[];
    var map;
    var now_icon_url = 'pic/busicon.png';
@@ -65,6 +67,19 @@ echo $jsword;
 	}
 	function wrap_tb(str){
 		return '<table border=1>'+str+'</table>';
+	}
+	function word_trans_time(t){
+		if(t==undefined){
+			return '尚未發車';
+		}
+		else if(t<=120){
+			return '進站中';
+		}/*else if(t>=1800){
+			
+		}*/
+		else if(t>120){
+			return Math.floor(t/60)+'分鐘';
+		}
 	}
 	function initial(){//ajax once data
 	var RouteName = '';
@@ -80,8 +95,10 @@ echo $jsword;
 						var lat = data[key]['Stops'][key2]['StopPosition']['PositionLat'];
 						var lon = data[key]['Stops'][key2]['StopPosition']['PositionLon'];
 						var title = {'name':data[key]['Stops'][key2]['StopName']['Zh_tw']};
+						var word = data[key]['Stops'][key2]['StopSequence'];
 						LatLng = {lat : lat,lng :　lon};//google map latlng obj 
-						var sa = add_marker(map,LatLng,title);
+						//var sa = add_marker(map,LatLng,title);
+						var sa = add_word_marker(map,LatLng,title,word);
 						markers.push(sa);
 						//console.log(markers);
 						//console.log('initial');
@@ -93,7 +110,7 @@ echo $jsword;
 			}
 				$('#routecode').html(RouteName);
 				
-			}).done(setInterval(function(){ panto_muti_marker(markers); }, 1000));
+			}).done(setTimeout(function(){ panto_muti_marker(markers); }, 1000));
 			
 			
 	}
@@ -122,6 +139,62 @@ echo $jsword;
 				;
 			}
 			});
+	}
+	function renew_car(){//ajax抓值
+	console.log('renew');
+		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=2", function( data ) {
+		$( "#foobar_left" ).html('');
+				if(firsttime == true){//第一次撈
+					;//firsttime = false;
+					}else{	
+					initail();//清除上一次資料
+				}
+				$.each( data, function( key, val ) {
+				//console.log(data);
+				var car_no = data[key]['PlateNumb'];//頻繁使用車號
+				if(car_no_filter.indexOf(car_no)==-1){//過濾不是本車隊的車號(放在car_no_filter)，
+				//REF:http://www.victsao.com/blog/81-javascript/159-javascript-arr-indexof
+					return;
+				}
+				//data[key]['PlateNumb']
+				$( "#foobar_left" ).append( "<div class='"+btn_css_render(car_no)+"' data-val='"+car_no+"'>&nbsp;&nbsp;"+car_no+"</div>" );//按鈕生成,觸發自訂義
+				//add_button(data[key]['PlateNumb']);
+				/*
+				console.log(data[key]);
+				console.log(data[key]['BusPosition']['PositionLat']);
+				console.log(data[key]['BusPosition']['PositionLon']);
+				console.log(data[key]['GPSTime']);
+				console.log(data[key]['PlateNumb']);
+				*/
+				//create gmap latlng obj
+				tmpLatLng = {lat : data[key]['BusPosition']['PositionLat'],lng :　data[key]['BusPosition']['PositionLon']};//google map latlng obj 
+				var tmptitle = {name:data[key]['PlateNumb'],time:data[key]['GPSTime']};//google map marker.title 
+				var tmpcontent = "時速: " + data[key]['Speed'] +"km"+  '<br></h3>' + "車號" + car_no; 
+				
+				//給附屬資訊_內容
+				//$('#speed').html(data[key]['UpdateTime']);
+				$('#speed').html(data[key]['Speed']+"KM");
+				$('#car_name').html(car_no);
+				$('#latlng').html( data[key]['BusPosition']['PositionLat']+'<br>'+data[key]['BusPosition']['PositionLon']);
+				var marker = add_marker(map,tmpLatLng,tmptitle,tmpcontent);
+				var info = add_info(map,tmpLatLng,tmpcontent);
+				
+				marker.infowindow = new google.maps.InfoWindow(
+				{
+					content: tmpcontent
+				});
+				markers.push(marker);
+				infos.push(info);
+				//
+			});//$.each END
+			if(firsttime == true){//第一次撈
+			//alert();
+				panto_muti_marker(markers);//轉移
+				firsttime = false;
+				}else{	
+					;//
+			}
+		});
 	}
 	function renew(){//ajax抓值
 		var cnt = 0;
@@ -152,8 +225,8 @@ echo $jsword;
 					context = wrap_td(StopName);
 					context2 = wrap_td(StopIndex);	
 					//context22 = wrap_td(StopUID);	
-					context22 = wrap_td(PlateNumb);	
-					context23 = wrap_td(EstimateTime);	
+					context22 = wrap_td((PlateNumb==-1)?'&nbsp;':PlateNumb);	
+					context23 = wrap_td(word_trans_time(EstimateTime));	
 					context3 += wrap_tr(context2+context+context22+context23);
 				//}
 			}		
@@ -177,6 +250,22 @@ echo $jsword;
 				map: a_map,
 				title : a_title['name'] /*+ "\n" + a_title['time']*/
 				//icon : (now_icon_url)
+			});
+			 
+			//map.panTo(tmpLatLng);
+			//bindInfoWindow(marker, map, infowindow, '<b>'+places[p].name + "</b><br>" + places[p].geo_name);
+			// not currently used but good to keep track of markers
+			//markers[data[key]['PlateNumb']].push(marker);
+			//http://maps.google.com/mapfiles/ms/icons/blue-dot.png
+			//console.log(markers);
+			return marker;
+	}
+	function add_word_marker(a_map,a_latlng,a_title,a_word){
+			var marker = new google.maps.Marker({
+				position: a_latlng,
+				map: a_map,
+				title : a_title['name'], /*+ "\n" + a_title['time']*/
+				icon : 'http://chart.apis.google.com/chart?chst=d_map_pin_letter&chld='+a_word+'|FF0000|000000'
 			});
 			 
 			//map.panTo(tmpLatLng);
