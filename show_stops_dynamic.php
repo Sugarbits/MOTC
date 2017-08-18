@@ -56,9 +56,13 @@ echo $jsword;
    };
    const timer_config = ['尚未發車','進站中','x分鐘','xx:oo'];
    //const timer_config_word = ['undefined','<=2分鐘','>2分鐘','>30分鐘'];
+   var btn_value;
    var markers =[];
+   var car_markers =[];
+   var car_infos =[];
    var map;
    var now_icon_url = 'pic/busicon.png';
+   var firsttime = true;//to make history trace effect
 	function wrap_td(str){
 		return '<td>'+str+'</td>';
 	}
@@ -81,6 +85,7 @@ echo $jsword;
 			return Math.floor(t/60)+'分鐘';
 		}
 	}
+	
 	function initial(){//ajax once data
 	var RouteName = '';
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=0", function( data ) {
@@ -116,8 +121,8 @@ echo $jsword;
 	}
 	function touch(){//ajax 試探值的變化
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1", function( data ) {
-			console.log("crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1");
-			console.log(data);
+			//console.log("crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1");
+			//console.log(data);
 			var UpdateTime = '';
 			for(key in data){
 				UpdateTime = data[key]['UpdateTime'];
@@ -127,6 +132,7 @@ echo $jsword;
 				sys.UpdateTime = Date.parse(UpdateTime);
 				//if(sys.Timer == ''){
 				renew();
+				renew_car();
 				sys.Timer = startTimer(sys.UpdateTime);
 				
 				//}
@@ -140,6 +146,37 @@ echo $jsword;
 			}
 			});
 	}
+	function car_all_reset(){
+			for(index in markers){
+				car_markers[index].setMap(null);
+			}
+			for(index in markers){
+				car_infos[index].setMap(null);
+			}
+			car_infos = [];
+			car_markers = [];
+			console.log('消除前次公車資訊');
+			//console.log(markers);
+	}
+	//EX4.php
+	function btn_css_render(val){//判定css
+		if(btn_value==val){
+			return 'btn chose';
+		}else{
+			return 'btn';
+		}
+	}
+	function add_info(a_map,a_latlng,a_content){
+			var infowindow = new google.maps.InfoWindow({                
+				disableAutoPan: true,
+				map: a_map,
+				position: a_latlng,
+				pixelOffset: new google.maps.Size(0,-25),
+				content: a_content
+			});
+			return infowindow;
+	}
+	//EX4.php END
 	function renew_car(){//ajax抓值
 	console.log('renew');
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=2", function( data ) {
@@ -147,15 +184,16 @@ echo $jsword;
 				if(firsttime == true){//第一次撈
 					;//firsttime = false;
 					}else{	
-					initail();//清除上一次資料
+					//alert();
+					car_all_reset();//清除上一次資料
 				}
 				$.each( data, function( key, val ) {
 				//console.log(data);
 				var car_no = data[key]['PlateNumb'];//頻繁使用車號
-				if(car_no_filter.indexOf(car_no)==-1){//過濾不是本車隊的車號(放在car_no_filter)，
+				/*if(car_no_filter.indexOf(car_no)==-1){//過濾不是本車隊的車號(放在car_no_filter)，
 				//REF:http://www.victsao.com/blog/81-javascript/159-javascript-arr-indexof
 					return;
-				}
+				}*/
 				//data[key]['PlateNumb']
 				$( "#foobar_left" ).append( "<div class='"+btn_css_render(car_no)+"' data-val='"+car_no+"'>&nbsp;&nbsp;"+car_no+"</div>" );//按鈕生成,觸發自訂義
 				//add_button(data[key]['PlateNumb']);
@@ -176,20 +214,20 @@ echo $jsword;
 				$('#speed').html(data[key]['Speed']+"KM");
 				$('#car_name').html(car_no);
 				$('#latlng').html( data[key]['BusPosition']['PositionLat']+'<br>'+data[key]['BusPosition']['PositionLon']);
-				var marker = add_marker(map,tmpLatLng,tmptitle,tmpcontent);
+				var marker = add_car_marker(map,tmpLatLng,tmptitle,tmpcontent);
 				var info = add_info(map,tmpLatLng,tmpcontent);
 				
 				marker.infowindow = new google.maps.InfoWindow(
 				{
 					content: tmpcontent
 				});
-				markers.push(marker);
-				infos.push(info);
+				car_markers.push(marker);
+				car_infos.push(info);
 				//
 			});//$.each END
 			if(firsttime == true){//第一次撈
 			//alert();
-				panto_muti_marker(markers);//轉移
+			//panto_muti_marker(car_markers);//轉移
 				firsttime = false;
 				}else{	
 					;//
@@ -205,6 +243,8 @@ echo $jsword;
 		var context22 = '';//stop bus num
 		var context23 = '';//stop bus predict time
 		var context3 = '';//total
+	
+		var context_ = '';//direction
 		
 		//
 
@@ -217,19 +257,25 @@ echo $jsword;
 				//for(keysu in data[key]['Stops']){
 					cnt_total++;
 					cnt++;
+					
 					var StopName = data[key]['StopName']['Zh_tw'];
 					var StopIndex = data[key]['StopSequence'];
 					//var StopUID = data[key]['StopUID'];
+					var SubRouteID = data[key]['SubRouteID'];
 					var PlateNumb = data[key]['PlateNumb'];
 					var EstimateTime = data[key]['EstimateTime'];
+					//var Direction = data[key]['Direction'];
 					context = wrap_td(StopName);
 					context2 = wrap_td(StopIndex);	
 					//context22 = wrap_td(StopUID);	
 					context22 = wrap_td((PlateNumb==-1)?'&nbsp;':PlateNumb);	
 					context23 = wrap_td(word_trans_time(EstimateTime));	
-					context3 += wrap_tr(context2+context+context22+context23);
+					context_  = wrap_td(SubRouteID);
+					context3 += wrap_tr(context2+context+context22+context23+context_);
+					
 				//}
 			}		
+			
 				$('#main').html(wrap_tb(context3));
 			});
 	}
@@ -244,12 +290,12 @@ echo $jsword;
         // constructor passing in this DIV.
 		//renew();
       }
-	function add_marker(a_map,a_latlng,a_title){
+	function add_car_marker(a_map,a_latlng,a_title){
 			var marker = new google.maps.Marker({
 				position: a_latlng,
 				map: a_map,
-				title : a_title['name'] /*+ "\n" + a_title['time']*/
-				//icon : (now_icon_url)
+				title : a_title['name'],/*+ "\n" + a_title['time']*/
+				icon : (now_icon_url)
 			});
 			 
 			//map.panTo(tmpLatLng);
