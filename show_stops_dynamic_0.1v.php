@@ -14,60 +14,38 @@ echo $jsword;
     <meta charset="utf-8">
     <title>Simple markers</title>
 	<style>
-	body, html {width: 100%; height: 100%; margin: 0; padding: 0; overflow: hidden;}
-	iframe {display:block;width:100%;}
-	
+	td{
+		font-size:150%;
+	}
 	#map{
 		z-index: 1;
-		top: 5vh;
-		margin-left: 5vh;
-		float: left;
-		width: 60vw;
-		height: 78vh;
-		border-radius: 1vw;
-		border: 2px solid #3F5680;
+		top:0%;
+		//position:absolute;
+		float:right;
+		width:70%;
+		height:90vh;
+		background-color:black;
 	}
 	#main{
 		z-index: 1;
 		top:0%;
+		//position:absolute;
 		float:right;
-		width:35vw;
-		margin-top:5vh;
-		height:83vh;
-		background-color:#59BABA;
+		width:30%;
+		height:90vh;
 		}
-	#footer0{
-		width:100%;
-		height:88vh;
-		background-color:#59BABA;
-	}
-	#footer1{
-		width:100%;
-		height:6vh;
-		background-color:#59BABA;
-	}
-	#footer2{
-		width:100%;
-		height:6vh;
-		background-color:#20B5B5;
-		color:white;
-	}
 	tr:nth-child(even) {background: #CCC}
 	tr:nth-child(odd) {background: #FFF}
 	</style>
   </head>
   <body>
-  <!--<h1 id='routecode'></h1>-->
+  <h1 id='routecode'></h1>
   <!--<h1 id='routename'></h1>-->
-  <div id='main'>
-  <iframe id='ttb' frameborder="0" height='100%' marginwidth="0" marginheight="0" scrolling="auto" onload="" allowtransparency="false" src="../TimeTable/dummy.php" frameborder="0"></iframe>
-  <!--<iframe id='ttb' frameborder="0" height='100%' marginwidth="0" marginheight="0" scrolling="auto" onload="" allowtransparency="false" src="../TimeTable/show_stops_dynamic_part_ui.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"" frameborder="0"></iframe>-->
-  </div>
+  <div id='main'></div>
   <!--地圖主體-->
   <div id="map"></div>
-  <div id="footer0"></div>
-  <div id="footer1">上次更新時間：<span id='remain'></span><span>秒</span></div>
-   <div id="footer2"><br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;作者：竹子 (於2017年9月)</div>
+  <BR>
+  <div>上次更新時間：<span id='remain'></span><span>秒</span></div>
    <!--地圖主體-->
    <!--<div id="map"></div>-->
    <!--附屬資訊_介紹欄位-->
@@ -112,9 +90,8 @@ echo $jsword;
 	var RouteName = '';
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=0", function( data ) {
 			//console.log(data);
-			console.log('初始化(map站牌)：');
-			console.log(data);
 			for(key in data){
+				if(key == _direct){
 					RouteName = data[key]['RouteName']['Zh_tw'];
 					//console.log(data[key]['Stops']);
 					for(key2 in data[key]['Stops']){
@@ -134,6 +111,7 @@ echo $jsword;
 							console.log(data[key][key2]['StopPosition']);
 						}*/
 					}
+				}
 			}
 				$('#routecode').html(RouteName);
 				
@@ -145,17 +123,15 @@ echo $jsword;
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1", function( data ) {
 			//console.log("crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1");
 			//console.log(data);
-			console.log('UpdateTime');
 			var UpdateTime = '';
 			for(key in data){
 				UpdateTime = data[key]['UpdateTime'];
 			}
-			console.log("更新時間："+UpdateTime);
-			console.log("與前次相差："+(Date.parse(UpdateTime)-sys.UpdateTime));
+			console.log(Date.parse(UpdateTime)-sys.UpdateTime);
 			if(sys.UpdateTime == ''){
 				sys.UpdateTime = Date.parse(UpdateTime);
 				//if(sys.Timer == ''){
-				//renew();
+				renew();
 				renew_car();
 				sys.Timer = startTimer(sys.UpdateTime);
 				
@@ -163,7 +139,7 @@ echo $jsword;
 			}
 			else if(sys.UpdateTime != Date.parse(UpdateTime)){
 				sys.UpdateTime = Date.parse(UpdateTime);
-				//renew();
+				renew();
 			}
 			else{//no change
 				;
@@ -202,10 +178,9 @@ echo $jsword;
 	}
 	//EX4.php END
 	function renew_car(){//ajax抓值
-	console.log('更新公車位置：');
+	console.log('renew');
 		$.getJSON( "crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=2", function( data ) {
-		console.log(data);
-		//$( "#foobar_left" ).html('');
+		$( "#foobar_left" ).html('');
 				if(firsttime == true){//第一次撈
 					;//firsttime = false;
 					}else{	
@@ -220,7 +195,7 @@ echo $jsword;
 					return;
 				}*/
 				//data[key]['PlateNumb']
-				//$( "#foobar_left" ).append( "<div class='"+btn_css_render(car_no)+"' data-val='"+car_no+"'>&nbsp;&nbsp;"+car_no+"</div>" );//按鈕生成,觸發自訂義
+				$( "#foobar_left" ).append( "<div class='"+btn_css_render(car_no)+"' data-val='"+car_no+"'>&nbsp;&nbsp;"+car_no+"</div>" );//按鈕生成,觸發自訂義
 				//add_button(data[key]['PlateNumb']);
 				/*
 				console.log(data[key]);
@@ -259,7 +234,6 @@ echo $jsword;
 			}
 		});
 	}
-	/*
 	function renew(){//ajax抓值
 		var cnt = 0;
 		var cnt_total = 0;
@@ -305,7 +279,6 @@ echo $jsword;
 				$('#main').html(wrap_tb(context3));
 			});
 	}
-	*/
 	////
 	function google_map_initial(){
 		var myLatLng = {lat: 23.7, lng: 121.4};
@@ -350,8 +323,9 @@ echo $jsword;
 			return marker;
 	}
 	function panto_muti_marker(pmarkers){
-		//console.log(pmarkers);
-		//console.log('panto_muti_marker');
+		console.log('panto_muti_marker');
+		console.log(pmarkers);
+		console.log('panto_muti_marker');
 		if(pmarkers.length != 0){
 			var bounds = new google.maps.LatLngBounds();
 			for (var i = 0; i < pmarkers.length; i++) {
@@ -363,15 +337,13 @@ echo $jsword;
 			}
 		map.fitBounds(bounds);
 		}else{
-			alert('沒有站牌！');
+			alert('沒有公車！');
 		}
 	}
 	  $(function(){
 		 $(window).on('load',function(){
 			google_map_initial();
 			initial();
-			ttb_iframe = document.getElementById('ttb');
-			ttb_iframe.src = "../TimeTable/show_stops_dynamic_part_ui.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode;
 			touch();
 			setInterval(function(){ touch(); }, 3000);
 		});
