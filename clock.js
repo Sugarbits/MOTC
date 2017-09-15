@@ -6,8 +6,7 @@ function startClock() {//clock
     var s = today.getSeconds();
     m = checkTime(m);
     s = checkTime(s);
-    document.getElementById('remain').innerHTML =
-    h + ":" + m + ":" + s;
+    document.getElementById('remain').innerHTML = h + ":" + m + ":" + s;
     var t = setTimeout(startClock, 500);
 }
 function startTimer(ms) {//timer count asc in UTC

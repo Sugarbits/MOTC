@@ -74,10 +74,12 @@ echo $jsword;
    <script>
    var sys={
 	   UpdateTime:'',
+	   NowTime:'',
 	   Timer:''
    };
    const timer_config = ['尚未發車','進站中','x分鐘','xx:oo'];
    //const timer_config_word = ['undefined','<=2分鐘','>2分鐘','>30分鐘'];
+   var clock_fix = 0;
    var btn_value;
    var markers =[];
    var car_markers =[];
@@ -146,6 +148,7 @@ echo $jsword;
 			//console.log("crawler/motc_bus_dynamic.php?route="+_route+"&direct="+_direct+"&citycode="+_citycode+"&func=1");
 			//console.log(data);
 			console.log('UpdateTime');
+			sys.NowTime = Date.parse(new Date());
 			var UpdateTime = '';
 			for(key in data){
 				UpdateTime = data[key]['UpdateTime'];
@@ -157,6 +160,7 @@ echo $jsword;
 				//if(sys.Timer == ''){
 				//renew();
 				renew_car();
+				//sys.Timer = startTimer(sys.UpdateTime);
 				sys.Timer = startTimer(sys.UpdateTime);
 				
 				//}
